@@ -1,0 +1,98 @@
+
+In my images, the voxel size goes to change -- 
+ 
+ Original:  0.066667 x 0.0666716 x 0.800047
+ Transform: 0.066667 x 0.0666716 x 1.4047
+ 
+for this we gonna use fslchpixdim  input _ _ _  
+
+FORGET ALL ABOVE THIS LINE
+
+________________________________________________________________________
+
+______________________________________________
+1) Denoise por NLM 
+mincnlm_nii.sh (nombredelarchivo).nii.gz T1_NLM.nii.gz -w 2 done 
+
+2) BIAS FIELD CORRRECTION 
+
+N4BiasFieldCorrection -d 3 -i T1_NLM.nii.gz -o T1_NLM_denN4.nii 
+
+3)For delete the labels orientation with : 
+
+fslchpixdim input _ _ _ (keeping the same voxel size) 
+
+EJEMPLO:
+fslchpixdim T1_25G_denN4_oriented.nii.gz 0.0666673 0.0666673 0.799954 
+
+.....For anatomical images acquired with volume 
+
+fslswapdim T1_25G_denN4_oriented.nii x -y z T1_25G_denN4_oriented_1.nii (observar cuál eje hay que cambiar)
+
+4)Bet for brain rats : 
+
+Using anatomical images T1, parameters --
+
+2X2
+
+rbet T1_7B1_denN4.nii bet_7B1 -r 13 -c 170 178 7 -v -R 
+
+VOLUMEN
+
+rbet T1_25G_denN4.nii bet_7B1 -r 13 -c 185 240 6 -v -R 
+
+5) For image registration to anatomial atlas use: cd ..
+
+## flirt -ref brain_oriented.nii.gz -in bet_7B1_normal.nii.gz -v -omat T1_bet_to_std2_mat.xfm -dof 12 -out T1_bet_to_std2.nii.gz 
+
+flirt -ref /misc/carr/aaquiles/MRI/stuff/brain_oriented.nii.gz -in bet_25G.nii.gz -v -omat T1_bet_to_std_25G_mat.xfm -nosearch -searchcost mutualinfo -dof 12 -out T1_bet_to_std_25G.nii.gz 
+
+____________________________________________
+
+
+For anatomical images acquired with volume 
+
+fslswapdim T1_25G_denN4_oriented.nii x -y z T1_25G_denN4_oriented_1.nii
+fslchpixdim T1_25G_denN4_oriented.nii.gz 0.0666673 0.0666673 0.799954 
+
+____________________________________________
+
+cat /misc/carr/aaquiles/MRI/stuff/header.xfm T1_bet_to_std_25G_mat.xfm /misc/carr/aaquiles/MRI/stuff/puntoycoma.xfm >> equisefeeme2.xfm
+
+DELETE the last lines of the code 
+
+"Para sobreescribir los valores de escala a al texto incial de .xfm:" 
+
+xfm2param equisefeeme2.xfm >> equisefeeme2_header.xfm 
+
+
+# Te ahorras el trabajo de arriba, colocando: 
+
+phD.sh T1_bet_to_std_25G_mat (NOMBRE DE TU MATRIZ DE TRANSFORMACIÓN)
+
+
+EJEMPLO: 
+
+Transformation matrix:
+0.860565  0.124928  0.0269283  -6.00638  
+-0.117269  0.861842  -0.0179036  -1.30005  
+-0.0286954  0.0219975  1.02984  3.96878  
+0 0 0 1
+; 
+
+DElETE THE LAST LINE 0 0 0 1 
+and part ";" to the final number of the 4x3, matrix 
+
+0.860565  0.124928  0.0269283  -6.00638  
+-0.117269  0.861842  -0.0179036  -1.30005  
+-0.0286954  0.0219975  1.02984  3.96878; 
+
+after parameter extraction
+-center         0.00000    0.00000    0.00000
+-translation   -6.00638   -1.30005    3.96878
+-rotation       0.92788    1.92660   -8.22582
+-scale          0.87000    0.86994    1.03044
+-shear          0.00828    0.00645    0.00428
+
+
+
